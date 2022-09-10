@@ -22,7 +22,7 @@ market_data_dict: current_prices_t = df.to_dict("index")  # type:ignore
 def predict(
     input_dict: current_prices_t,
     holdings: holdings_t = {},
-    current_money: float = 1000,
+current_money: float = 1000,
     day: int = 0,
 ) -> return_t:
     df = pd.DataFrame(input_dict).transpose()
