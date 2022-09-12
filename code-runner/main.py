@@ -13,7 +13,6 @@ baseDir = os.path.dirname(__file__)
 os.chdir(baseDir + "/" + PROJECT_NAME)
 sys.path.append(".")
 
-
 stock_name_t = int
 current_prices_t = pd.DataFrame  # index: stock_name_t, columns: str, values: money_t
 holdings_t = Mapping[stock_name_t, int]
@@ -24,6 +23,7 @@ func_t = Callable[[current_prices_t, holdings_t, float, int], transactions_t]
 predictor: func_t = importlib.import_module(PROJECT_NAME + ".main").predict
 
 df = pd.read_csv(baseDir + "/opening_prices_biotech_complete.csv")
+df.drop(["ticker", "Unnamed: 0"], axis=1, inplace=True)
 num_of_stocks = len(df)
 current_money = INITIAL_MONEY
 holdings = {i: 0 for i in range(num_of_stocks)}

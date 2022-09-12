@@ -10,8 +10,6 @@ def predict(
     day,
 ):
     day = day
-    df.drop(["ticker", "Unnamed: 0"], axis=1, inplace=True)
-
     new = pd.DataFrame()
     new["std"] = df.std(axis=1)
     new["min"] = df.min(axis=1)
@@ -19,7 +17,7 @@ def predict(
     new["mean"] = df.mean(axis=1)
     new.reset_index(inplace=True)
 
-    prices = df[df.columns[100:149]]
+    prices = df.iloc[0:,100:149]
     new = pd.concat([new, prices], axis=1)
 
     new.drop(["index"], axis=1, inplace=True)
@@ -29,7 +27,7 @@ def predict(
         model = pickle.load(file)
     preds = model.predict(new)
 
-    current_prices = df[df.columns[-1]]
+    current_prices = df.iloc[:, -1]
     diff = preds - current_prices
     diff = pd.Series(diff, dtype=float)
 
