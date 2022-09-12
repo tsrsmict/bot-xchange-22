@@ -1,40 +1,43 @@
-import warnings
-warnings.filterwarnings("ignore")
+PROJECT_NAME = "sample_project"
+TOTAL_DAYS = 50
+INITIAL_MONEY = 10000
+
+import importlib
+import os
+import sys
+from typing import Callable, Mapping
 
 import pandas as pd
-df = pd.read_csv("./opening_prices_biotech_complete.csv")
 
-import sys
-import os
-sys.path.append(r".")
-os.chdir(r"./the_project")
+baseDir = os.path.dirname(__file__)
+os.chdir(baseDir + "/" + PROJECT_NAME)
+sys.path.append(".")
 
-from the_project import main
-
-from typing import Mapping, Callable
-
-TOTAL_DAYS = 50
 
 stock_name_t = int
-individual_prices_t = Mapping[str, float]
-current_prices_t = Mapping[stock_name_t, individual_prices_t]
-
+current_prices_t = pd.DataFrame  # index: stock_name_t, columns: str, values: money_t
 holdings_t = Mapping[stock_name_t, int]
+transactions_t = Mapping[stock_name_t, int]
 
-return_t = Mapping[stock_name_t, int]
+func_t = Callable[[current_prices_t, holdings_t, float, int], transactions_t]
 
-market_data_dict = df.to_dict("index")
+predictor: func_t = importlib.import_module(PROJECT_NAME + ".main").predict
 
-func_t = Callable[[current_prices_t, holdings_t, float, int], return_t]
+df = pd.read_csv(baseDir + "/opening_prices_biotech_complete.csv")
+num_of_stocks = len(df)
+current_money = INITIAL_MONEY
+holdings = {i: 0 for i in range(num_of_stocks)}
 
-holdings = {i: 0 for i in range(0, 48)}
-current_money = 1000
 for day in range(TOTAL_DAYS):
-    data = df[df.columns[: day - TOTAL_DAYS]]
-    data_dict = data.to_dict("index")  # type:ignore
-    ret = main.predict(data_dict, holdings, current_money, day)
-    today_data = df[df.columns[day - TOTAL_DAYS - 1]]
-    for stock, num_shares in ret.items():
+    day_index = day - TOTAL_DAYS
+    data = df.iloc[:, :day_index]
+    today_data = df.iloc[:, day_index - 1]
+    try:
+        transactions = predictor(data, holdings, current_money, day)
+    except Exception as e:
+        print("Error occured: ", e)
+        continue
+    for stock, num_shares in transactions.items():
         price = today_data[stock]
         amount = num_shares * price
         if num_shares > 0:
@@ -44,19 +47,30 @@ for day in range(TOTAL_DAYS):
                 )
                 continue
         else:
-            if num_shares > holdings[stock]:
+            if abs(num_shares) > holdings[stock]:
                 print(
                     f"Tried to sell {stock=} {price=} {amount=} {num_shares=} {holdings[stock]=}"
                 )
                 continue
         holdings[stock] += num_shares
         current_money -= amount
+        assert all(
+            holdings[stock] >= 0 for stock in range(num_of_stocks)
+        ), "Negative holding not allowed"
+        assert current_money >= 0, "Negative money not allowed"
     print(f"{day=} {current_money=}")
 
-today_data = df[df.columns[-1]]
+today_data = df.iloc[:, -1]
 for stock, num_shares in holdings.items():
     price = today_data[stock]
     amount = num_shares * price
     current_money += amount
 
-print(current_money)
+delta = current_money - INITIAL_MONEY
+print(
+    "Final money:",
+    current_money,
+    "with increase of",
+    round(delta / INITIAL_MONEY * 100, 2),
+    "\b%",
+)
