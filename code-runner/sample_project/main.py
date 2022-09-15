@@ -1,7 +1,14 @@
 import warnings
+
 warnings.filterwarnings("ignore")
 import pickle
 import pandas as pd
+
+
+with open("model", "rb") as file:
+    model = pickle.load(file)
+
+log_data = pd.DataFrame()
 
 def predict(
     df,
@@ -17,14 +24,14 @@ def predict(
     new["mean"] = df.mean(axis=1)
     new.reset_index(inplace=True)
 
-    prices = df.iloc[0:,100:149]
+    prices = df.iloc[0:, 100:149]
     new = pd.concat([new, prices], axis=1)
 
     new.drop(["index"], axis=1, inplace=True)
 
-    with open("model", "rb") as file:
-        model = pickle.load(file)
     preds = model.predict(new)
+    log_data[day] = preds
+    print(hash(str(preds)))
 
     current_prices = df.iloc[:, -1]
     diff = preds - current_prices
@@ -38,7 +45,9 @@ def predict(
         transactions[stock] = int(num)
 
     stocks_to_sell = diff[diff < 0]  # type: ignore
-    for stock in stocks_to_sell[stocks_to_sell.index.map(lambda i: holdings[i] > 0)].index:
+    for stock in stocks_to_sell[
+        stocks_to_sell.index.map(lambda i: holdings[i] > 0)
+    ].index:
         transactions[stock] = -holdings[stock]
 
     return transactions
