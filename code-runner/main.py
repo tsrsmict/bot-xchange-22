@@ -1,6 +1,6 @@
 PROJECT_NAME = "sample_project"
 TOTAL_DAYS = 50
-INITIAL_MONEY = 10000
+INITIAL_MONEY = 2000
 
 import importlib
 import os

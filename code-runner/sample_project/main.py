@@ -21,7 +21,6 @@ def predict(
     new = pd.concat([new, prices], axis=1)
 
     new.drop(["index"], axis=1, inplace=True)
-    new.fillna(0, inplace=True)
 
     with open("model", "rb") as file:
         model = pickle.load(file)
@@ -31,18 +30,15 @@ def predict(
     diff = preds - current_prices
     diff = pd.Series(diff, dtype=float)
 
-    stock_to_buy = diff.argmax()
-    stock_to_buy_price = current_prices[stock_to_buy]
-    num_to_buy = current_money // stock_to_buy_price
+    transactions = {}
+    stocks_to_buy = diff[diff > 0]  # type: ignore
+    stocks_to_buy /= stocks_to_buy.sum()
+    for stock, frac in stocks_to_buy.items():
+        num = frac * current_money / current_prices[stock]
+        transactions[stock] = int(num)
 
-    current_min = float("inf")
-    stock_to_sell = 0
-    for stock_name in holdings:
-        if holdings[stock_name] == 0:
-            continue
-        if diff[stock_name] < current_min:
-            current_min = diff[stock_name]
-            stock_to_sell = stock_name
-    num_to_sell = holdings[stock_to_sell]
+    stocks_to_sell = diff[diff < 0]  # type: ignore
+    for stock in stocks_to_sell[stocks_to_sell.index.map(lambda i: holdings[i] > 0)].index:
+        transactions[stock] = -holdings[stock]
 
-    return {stock_to_buy: num_to_buy, stock_to_sell: -num_to_sell}
+    return transactions
