@@ -1,8 +1,8 @@
-import warnings
-warnings.filterwarnings("ignore")
-import pickle
+import keras.models
 import pandas as pd
 
+
+model = keras.models.load_model("./lstm_model")
 def make_trades(
     df,
     holdings,
@@ -10,22 +10,15 @@ def make_trades(
     day,
 ):
     day = day
-    new = pd.DataFrame()
-    new["std"] = df.std(axis=1)
-    new["min"] = df.min(axis=1)
-    new["max"] = df.max(axis=1)
-    new["mean"] = df.mean(axis=1)
-    new.reset_index(inplace=True)
 
-    prices = df.iloc[0:,100:149]
-    new = pd.concat([new, prices], axis=1)
+    num = len(df)
+    mat = df.iloc[:,-50:].values
+    mat = mat.reshape((num, 50, 1))
 
-    new.drop(["index, ticker"], axis=1, inplace=True)
-    new.fillna(0, inplace=True)
+    preds_arr = model.predict(mat)  # type: ignore
+    preds_arr = preds_arr.reshape((num,))
 
-    with open("model", "rb") as file:
-        model = pickle.load(file)
-    preds = model.predict(new)
+    preds = pd.Series(preds_arr)
 
     current_prices = df.iloc[:, -1]
     diff = preds - current_prices
