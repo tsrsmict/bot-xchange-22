@@ -1,4 +1,3 @@
-PROJECT_NAME = "lstm_project"
 TOTAL_DAYS = 50
 INITIAL_MONEY = 10000
 
@@ -11,6 +10,11 @@ from typing import Callable, Mapping
 import pandas as pd
 
 from history import History, DayData
+
+if len(sys.argv) == 1:
+    PROJECT_NAME = "lstm_project"
+else:
+    PROJECT_NAME = sys.argv[1]
 
 baseDir = os.path.dirname(__file__)
 os.chdir(baseDir + "/" + PROJECT_NAME)

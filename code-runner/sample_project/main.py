@@ -17,10 +17,10 @@ def make_trades(
     new["mean"] = df.mean(axis=1)
     new.reset_index(inplace=True)
 
-    prices = df.iloc[0:,100:149]
+    prices = df.iloc[0:,101:149]
     new = pd.concat([new, prices], axis=1)
 
-    new.drop(["index, ticker"], axis=1, inplace=True)
+    # new.drop(["ticker"], axis=1, inplace=True)
     new.fillna(0, inplace=True)
 
     with open("model", "rb") as file:
