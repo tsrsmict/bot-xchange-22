@@ -1,5 +1,5 @@
 TOTAL_DAYS = 50
-INITIAL_MONEY = 10000
+INITIAL_MONEY = 10_000_000
 
 import importlib
 import os
@@ -13,8 +13,10 @@ from history import History, DayData
 
 if len(sys.argv) == 1:
     PROJECT_NAME = "lstm_project"
+    DATA = "./biotech_test_data.csv"
 else:
     PROJECT_NAME = sys.argv[1]
+    DATA = sys.argv[2]
 
 baseDir = os.path.dirname(__file__)
 os.chdir(baseDir + "/" + PROJECT_NAME)
@@ -31,7 +33,7 @@ func_t = Callable[[current_prices_t, holdings_t, float, int], transactions_t]
 
 predictor: func_t = importlib.import_module(PROJECT_NAME + ".main").make_trades
 
-df = pd.read_csv(baseDir + "./biotech_test_data.csv")
+df = pd.read_csv(baseDir + "/" + DATA)
 df.drop(["ticker_name", "Unnamed: 0"], axis=1, inplace=True)
 num_of_stocks = len(df)
 current_money = INITIAL_MONEY
@@ -72,8 +74,6 @@ for day in range(TOTAL_DAYS):
                 )
                 continue
             day_data.sold[stock] = -num_shares
-        day_data.holdings = holdings
-        day_data.calculate_assets()
         holdings[stock] += num_shares
         current_money -= amount
         assert all(
@@ -81,7 +81,7 @@ for day in range(TOTAL_DAYS):
         ), "Negative holding not possible"
         assert current_money >= 0, "Negative money not possible"
     day_data.money = current_money
-    day_data.holdings = holdings
+    day_data.holdings = holdings.copy()
     day_data.calculate_assets()
     print(f"{day=} {current_money=}")
 

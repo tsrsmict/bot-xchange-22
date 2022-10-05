@@ -1,8 +1,6 @@
 import pickle
 import pandas as pd
 
-from src import helper1, helper2
-
 MODEL_PATH = "model.sav"
 
 
@@ -18,13 +16,13 @@ def make_trades(
 ):
 
     # TODO: Your code may use a different number of days
-    prices = df.iloc[-50:] # last 50 days
+    prices = df.iloc[:, -50:] # last 50 days
 
     with open(MODEL_PATH, "rb") as file:
         model = pickle.load(file)
 
     # TODO: Your model might require a different set of input features 
-    preds = model.predict([day, prices])
+    preds = model.predict(prices)
 
     # The last column in the dataframe represents the current price
     current_prices = df.iloc[:, -1]
@@ -61,8 +59,5 @@ def make_trades(
     num_to_sell = holdings[stock_to_sell]
 
     # The lines below are just to demonstrate that you can call code from other files - feel free to remove them
-    helper1.helper1()
-    helper2.helper2()
-
     # TODO: Remember to update this line! The length of your return dictionary will probably be variable and not static, as you may wish to buy or sell a different number of stocks each day.
     return {stock_to_buy: num_to_buy, stock_to_sell: -num_to_sell}
